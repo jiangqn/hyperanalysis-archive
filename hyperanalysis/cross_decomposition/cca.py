@@ -1,5 +1,5 @@
 import torch
-from hyperanalysis.utils.linalg import cov, postive_define_matrix_power
+from hyperanalysis.utils.linalg import cov, postive_definite_matrix_power
 from typing import Tuple
 
 class CCA(object):
@@ -43,8 +43,8 @@ class CCA(object):
         SXY = cov(X, Y)
         SYY = cov(Y, Y)
 
-        PSXX = postive_define_matrix_power(SXX, -1/2)
-        PSYY = postive_define_matrix_power(SYY, -1/2)
+        PSXX = postive_definite_matrix_power(SXX, -1 / 2)
+        PSYY = postive_definite_matrix_power(SYY, -1 / 2)
 
         M = PSXX.matmul(SXY).matmul(PSYY)
         U, S, V = torch.svd(M)

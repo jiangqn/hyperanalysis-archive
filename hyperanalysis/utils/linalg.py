@@ -28,7 +28,7 @@ def check_matrix_symmetric(X: torch.FloatTensor) -> None:
     assert X.size(0) == X.size(1)
     assert (X - X.t()).abs().max().item() <= eps
 
-def postive_define_matrix_power(X: torch.FloatTensor, power=1) -> torch.FloatTensor:
+def postive_definite_matrix_power(X: torch.FloatTensor, power=1) -> torch.FloatTensor:
     check_matrix_symmetric(X)
     U, S, V = torch.svd(X)
     return U.matmul(torch.diag(torch.pow(S, power))).matmul(V.t())
