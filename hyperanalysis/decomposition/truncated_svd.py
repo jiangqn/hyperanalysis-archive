@@ -20,8 +20,10 @@ class TruncatedSVD(object):
         return self._transform(X)
 
     def _fit(self, X: torch.FloatTensor) -> None:
+
         assert len(X.size()) == 2
         num, dim = X.size()
+        assert num >= 2
 
         _, S, V = torch.svd(X)
 

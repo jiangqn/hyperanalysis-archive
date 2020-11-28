@@ -23,6 +23,7 @@ class PCA(object):
 
         assert len(X.size()) == 2
         num, dim = X.size()
+        assert num >= 2
 
         self.mean_ = X.mean(dim=0, keepdim=True)
         X -= self.mean_
