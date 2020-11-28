@@ -33,11 +33,4 @@ start = time.time()
 y = pca.fit_transform(X)
 end = time.time()
 print(end - start)
-
-print(pca.explained_variance_)
-print(pca.explained_variance_ratio_)
-
-y = y.cpu().numpy()
-
-print(sy)
-print(y)
+print(pca.n_components)
