@@ -59,10 +59,13 @@ class CCA(object):
         U, S, V = torch.svd(M)
 
         self.corr_coefs_ = S[0:self.n_components_].tolist()
-        self.A_ = PSXX.matmul(U[:, 0:self.n_components_])
-        self.B_ = PSYY.matmul(V[:, 0:self.n_components_])
-        self.A_ = self.A_ / torch.norm(self.A_, dim=0, keepdim=True)
-        self.B_ = self.B_ / torch.norm(self.B_, dim=0, keepdim=True)
+
+        A_ = PSXX.matmul(U[:, 0:self.n_components_])
+        B_ = PSYY.matmul(V[:, 0:self.n_components_])
+        A_ = A_ / torch.norm(A_, dim=0, keepdim=True)
+        B_ = B_ / torch.norm(B_, dim=0, keepdim=True)
+
+        self.A_, self.B_ = A_, B_
 
 
     def _transform(self, X: torch.FloatTensor, Y: torch.FloatTensor) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
