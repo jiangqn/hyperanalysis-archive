@@ -5,6 +5,7 @@ from hyperanalysis.cross_decomposition.cca import CCA
 class SVCCA(object):
 
     def __init__(self, explained_variance_ratio: float = 0.99) -> None:
+        super(SVCCA, self).__init__()
         self._explained_variance_ratio = explained_variance_ratio
 
     def score(self, X: torch.FloatTensor, Y: torch.FloatTensor) -> float:
