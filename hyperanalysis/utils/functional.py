@@ -16,6 +16,6 @@ def svcca(X: torch.FloatTensor, Y: torch.FloatTensor, explained_variance_ratio: 
     _svcca = SVCCA(explained_variance_ratio=explained_variance_ratio)
     return _svcca.score(X, Y)
 
-def pwcca(X: torch.FloatTensor, Y: torch.FloatTensor, explained_variance_ratio: float = 0.99) -> float:
-    _pwcca = PWCCA(explained_variance_ratio=explained_variance_ratio)
+def pwcca(X: torch.FloatTensor, Y: torch.FloatTensor, explained_variance_ratio: float = 0.99, symmetric: bool = True) -> float:
+    _pwcca = PWCCA(explained_variance_ratio=explained_variance_ratio, symmetric=symmetric)
     return _pwcca.score(X, Y)
