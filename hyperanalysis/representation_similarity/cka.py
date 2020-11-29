@@ -2,7 +2,7 @@ import torch
 
 class CKA(object):
 
-    def __init__(self, kernel: str = "linear", sigma: float = None, degree: int = None):
+    def __init__(self, kernel: str = "linear", sigma: float = None, degree: int = None) -> None:
         super(CKA, self).__init__()
 
         assert kernel in ["linear", "rbf", "poly"]

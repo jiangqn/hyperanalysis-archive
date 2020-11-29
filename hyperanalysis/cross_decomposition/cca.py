@@ -4,7 +4,7 @@ from typing import Tuple
 
 class CCA(object):
 
-    def __init__(self, n_components=None):
+    def __init__(self, n_components: int = None) -> None:
         super(CCA, self).__init__()
         self.n_components_ = n_components
 

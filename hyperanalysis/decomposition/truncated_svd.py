@@ -2,7 +2,7 @@ import torch
 
 class TruncatedSVD(object):
 
-    def __init__(self, n_components=None, explained_variance_ratio=None) -> None:
+    def __init__(self, n_components: int = None, explained_variance_ratio: float = None) -> None:
         super(TruncatedSVD, self).__init__()
         assert n_components == None or explained_variance_ratio == None
         assert explained_variance_ratio == None or (explained_variance_ratio >= 0 and explained_variance_ratio <= 1)
