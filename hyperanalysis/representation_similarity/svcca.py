@@ -1,5 +1,5 @@
 import torch
-import hyperanalysis.utils.functional as F
+from hyperanalysis.decomposition.truncated_svd import TruncatedSVD
 from hyperanalysis.cross_decomposition.cca import CCA
 
 class SVCCA(object):
@@ -7,12 +7,14 @@ class SVCCA(object):
     def __init__(self, explained_variance_ratio: float = 0.99) -> None:
         self._explained_variance_ratio = explained_variance_ratio
 
-    def score(self, X: torch.FloatTensor, Y: torch.FloatTensor) -> None:
+    def score(self, X: torch.FloatTensor, Y: torch.FloatTensor) -> float:
 
         X, Y = X.clone(), Y.clone()
 
-        X = F.truncated_svd(X, explained_variance_ratio=self._explained_variance_ratio)
-        Y = F.truncated_svd(Y, explained_variance_ratio=self._explained_variance_ratio)
+        X_tsvd = TruncatedSVD(explained_variance_ratio=self._explained_variance_ratio)
+        X = X_tsvd.fit_transform(X)
+        Y_tsvd = TruncatedSVD(explained_variance_ratio=self._explained_variance_ratio)
+        Y = Y_tsvd.fit_transform(Y)
 
         X_dim = X.size(1)
         Y_dim = Y.size(1)
