@@ -72,6 +72,10 @@ class CCA(object):
 
         X, Y = X.clone(), Y.clone()
 
+        assert hasattr(self, "X_mean_") and hasattr(self, "Y_mean_")
+        assert hasattr(self, "X_std_") and hasattr(self, "Y_std_")
+        assert hasattr(self, "A_") and hasattr(self, "B_")
+
         X = (X - self.X_mean_) / self.X_std_
         Y = (Y - self.Y_mean_) / self.Y_std_
 

@@ -21,6 +21,8 @@ class TruncatedSVD(object):
 
     def _fit(self, X: torch.FloatTensor) -> None:
 
+        X = X.clone()
+
         assert len(X.size()) == 2
         num, dim = X.size()
         assert num >= 2
@@ -52,5 +54,8 @@ class TruncatedSVD(object):
         self.V_ = V[:, 0:self.n_components_]
 
     def _transform(self, X: torch.FloatTensor) -> torch.FloatTensor:
+
+        X = X.clone()
+
         assert hasattr(self, "V_")
         return X.matmul(self.V_)
