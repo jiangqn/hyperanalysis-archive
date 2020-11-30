@@ -1,4 +1,5 @@
 import torch
+from hyperanalysis.utils.linalg import squared_euclidean_distance
 
 class CKA(object):
 
@@ -28,8 +29,7 @@ class CKA(object):
             K = X.matmul(X.t())
 
         elif self.kernel == "rbf":
-            G = X.matmul(X.t()) # gram matrix
-            S = (torch.diag(G) - G) + (torch.diag(G) - G).t() # square error matrix ||x_i - x_j||_{2}^{2}
+            S = squared_euclidean_distance(X)
             if self.sigma == None:
                 self.sigma = torch.sqrt(torch.median(S[S != 0])).item()
             K = torch.exp(S / (-2 * self.sigma * self.sigma))
@@ -57,6 +57,6 @@ class CKA(object):
         num = X.size(0)
 
         XH = self._centering(self._kernel_matrix(X))
-        YH = self._centering(self._kernel_matrix(Y))
+        YH = XH if X is Y else self._centering(self._kernel_matrix(Y))
 
         return torch.trace(XH.matmul(YH)) / ((num - 1) * (num - 1))
