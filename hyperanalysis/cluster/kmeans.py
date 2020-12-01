@@ -59,7 +59,7 @@ class KMeans(object):
             index = random.randint(0, num - 1)
             cluster_centers_ = X[index: index + 1]
             for i in range(1, self.n_clusters):
-                minimal_distance = squared_euclidean_distance(X, cluster_centers_).min(dim=1)[0]
+                minimal_distance = torch.sqrt(squared_euclidean_distance(X, cluster_centers_).min(dim=1)[0])
                 index = torch.multinomial(minimal_distance, 1, replacement=False).item()
                 cluster_centers_ = torch.cat([cluster_centers_, X[index: index + 1]], dim=0)
             self.cluster_centers_ = cluster_centers_
@@ -132,5 +132,5 @@ class KMeans(object):
 
         assert len(X.size()) == 2
 
-        distance = torch.sqrt(squared_euclidean_distance(X, self.cluster_centers_)).min(dim=1)[0]
+        distance = torch.sqrt(squared_euclidean_distance(X, self.cluster_centers_))
         return distance
