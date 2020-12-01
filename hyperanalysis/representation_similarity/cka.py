@@ -47,8 +47,7 @@ class CKA(object):
         assert K.size(0) == K.size(1)
         num = K.size(0)
 
-        H = torch.eye(num) - torch.ones(num, num) / num
-        H = H.to(K.device)
+        H = torch.eye(num, dtype=K.dtype, device=K.device) - torch.ones(num, num, dtype=K.dtype, device=K.device) / num
 
         return K.matmul(H)
 
