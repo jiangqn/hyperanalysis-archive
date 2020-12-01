@@ -1,2 +1,2 @@
 # hyperanalysis
-A toolkit for high performance data analysis based on PyTorch.
+A GPU-accelerated data analysis toolkit based on PyTorch.
