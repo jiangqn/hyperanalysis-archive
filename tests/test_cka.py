@@ -17,8 +17,9 @@ Y = X[:, 100:200]
 X = X[:, 0:100]
 
 import time
-cka = CKA(kernel="rbf")
+cka = CKA()
 start = time.time()
 print(cka.score(X, Y))
+print(F.cka(X, Y))
 end = time.time()
 print(end - start)

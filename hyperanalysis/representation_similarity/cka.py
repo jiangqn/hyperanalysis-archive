@@ -1,15 +1,13 @@
 import torch
-from hyperanalysis.utils.linalg import squared_euclidean_distance
+from hyperanalysis.kernel.kernel import get_kernel
 
 class CKA(object):
 
-    def __init__(self, kernel: str = "linear", sigma: float = None, degree: int = None) -> None:
+    def __init__(self, kernel: str = "linear", sigma: float = None, degree: int = 2, coef0: float = 1.0) -> None:
         super(CKA, self).__init__()
 
         assert kernel in ["linear", "rbf", "poly"]
-        self.kernel = kernel
-        self.sigma = sigma
-        self.degree = degree
+        self.kernel = get_kernel(kernel=kernel, sigma=sigma, degree=degree, coef0=coef0)
 
     def score(self, X: torch.FloatTensor, Y: torch.FloatTensor) -> float:
 
@@ -22,24 +20,6 @@ class CKA(object):
 
         self.cka_score_ = cka_score.item()
         return self.cka_score_
-
-    def _kernel_matrix(self, X: torch.FloatTensor) -> torch.FloatTensor:
-
-        if self.kernel == "linear":
-            K = X.matmul(X.t())
-
-        elif self.kernel == "rbf":
-            S = squared_euclidean_distance(X)
-            if self.sigma == None:
-                self.sigma = torch.sqrt(torch.median(S[S != 0])).item()
-            K = torch.exp(S / (-2 * self.sigma * self.sigma))
-
-        else: # kernel == "poly"
-            if self.degree == None:
-                self.degree = 2
-            K = torch.pow(X.matmul(X.t()) + 1, self.degree)
-
-        return K
 
     def _centering(self, K: torch.FloatTensor) -> torch.FloatTensor:
 
@@ -55,7 +35,7 @@ class CKA(object):
 
         num = X.size(0)
 
-        XH = self._centering(self._kernel_matrix(X))
-        YH = XH if X is Y else self._centering(self._kernel_matrix(Y))
+        XH = self._centering(self.kernel(X))
+        YH = XH if X is Y else self._centering(self.kernel(Y))
 
         return torch.trace(XH.matmul(YH)) / ((num - 1) * (num - 1))
