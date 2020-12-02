@@ -17,7 +17,7 @@ class Ridge(object):
         self._fit(X, y)
         return self._predict(X)
 
-    def _fit(self, X: torch.FloatTensor, y: torch.FloatTensor) -> torch.FloatTensor:
+    def _fit(self, X: torch.FloatTensor, y: torch.FloatTensor) -> None:
 
         X, y = X.clone(), y.clone()
 
@@ -28,7 +28,7 @@ class Ridge(object):
 
         if self.fit_intercept:
             constant = torch.ones((num, 1), dtype=X.dtype, device=X.device)
-            X = torch.cat((X, constant), dim=1)
+            X = torch.cat((constant, X), dim=1)
         y = y.unsqueeze(-1)
 
         dim = X.size(1)
@@ -37,8 +37,8 @@ class Ridge(object):
 
         beta = self.beta.unsqueeze(-1).tolist()
         if self.fit_intercept:
-            self.coef_ = beta[0:-1]
-            self.intercept_ = beta[-1]
+            self.coef_ = beta[1:]
+            self.intercept_ = beta[0]
         else:
             self.coef_ = beta
             self.intercept_ = 0.0
@@ -55,7 +55,7 @@ class Ridge(object):
 
         if self.fit_intercept:
             constant = torch.ones((num, 1), dtype=X.dtype, device=X.device)
-            X = torch.cat((X, constant), dim=1)
+            X = torch.cat((constant, X), dim=1)
 
-        y = X.matmul(self.beta).unsqueeze(-1)
+        y = X.matmul(self.beta).squeeze(-1)
         return y
