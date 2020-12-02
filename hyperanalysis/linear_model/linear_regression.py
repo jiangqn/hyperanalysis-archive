@@ -1,10 +1,9 @@
 import torch
 
-class Ridge(object):
+class LinearRegression(object):
 
-    def __init__(self, alpha: float = 1.0, fit_intercept: bool = True) -> None:
-        super(Ridge, self).__init__()
-        self.alpha = alpha
+    def __init__(self, fit_intercept: bool = True) -> None:
+        super(LinearRegression, self).__init__()
         self.fit_intercept = fit_intercept
 
     def fit(self, X: torch.FloatTensor, y: torch.FloatTensor) -> None:
@@ -24,6 +23,7 @@ class Ridge(object):
         assert len(X.size()) == 2
         assert len(y.size()) == 1
         assert X.size(0) == y.size(0)
+        assert X.size(0) >= X.size(1), "There is no unbiased solution."
         num = X.size(0)
 
         if self.fit_intercept:
@@ -31,9 +31,7 @@ class Ridge(object):
             X = torch.cat((X, constant), dim=1)
         y = y.unsqueeze(-1)
 
-        dim = X.size(1)
-        I = torch.eye(dim, dtype=X.dtype, device=X.device)
-        self.beta = torch.inverse(X.t().matmul(X) + self.alpha * I).matmul(X.t()).matmul(y)
+        self.beta = torch.inverse(X.t().matmul(X)).matmul(X.t()).matmul(y)
 
         beta = self.beta.unsqueeze(-1).tolist()
         if self.fit_intercept:

@@ -57,8 +57,9 @@ class PCA(object):
 
     def _transform(self, X: torch.FloatTensor) -> torch.FloatTensor:
 
-        X = X.clone()
-
         assert hasattr(self, "mean_")
         assert hasattr(self, "V_")
+
+        X = X.clone()
+
         return (X - self.mean_).matmul(self.V_)

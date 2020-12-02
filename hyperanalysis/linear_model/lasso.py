@@ -1,9 +1,9 @@
 import torch
 
-class Ridge(object):
+class Lasso(object):
 
     def __init__(self, alpha: float = 1.0, fit_intercept: bool = True) -> None:
-        super(Ridge, self).__init__()
+        super(Lasso, self).__init__()
         self.alpha = alpha
         self.fit_intercept = fit_intercept
 
