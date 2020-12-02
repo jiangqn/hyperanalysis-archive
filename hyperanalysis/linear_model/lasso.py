@@ -1,11 +1,13 @@
 import torch
 
-class Lasso(object):
+class LinearRegression(object):
 
-    def __init__(self, alpha: float = 1.0, fit_intercept: bool = True) -> None:
-        super(Lasso, self).__init__()
+    def __init__(self, alpha: float = 1.0, fit_intercept: bool = True, max_iter: int = 1000) -> None:
+        super(LinearRegression, self).__init__()
+        assert alpha >= 0
         self.alpha = alpha
         self.fit_intercept = fit_intercept
+        self.max_iter = max_iter
 
     def fit(self, X: torch.FloatTensor, y: torch.FloatTensor) -> None:
         self._fit(X, y)
@@ -17,7 +19,7 @@ class Lasso(object):
         self._fit(X, y)
         return self._predict(X)
 
-    def _fit(self, X: torch.FloatTensor, y: torch.FloatTensor) -> torch.FloatTensor:
+    def _fit(self, X: torch.FloatTensor, y: torch.FloatTensor) -> None:
 
         X, y = X.clone(), y.clone()
 
@@ -28,17 +30,27 @@ class Lasso(object):
 
         if self.fit_intercept:
             constant = torch.ones((num, 1), dtype=X.dtype, device=X.device)
-            X = torch.cat((X, constant), dim=1)
-        y = y.unsqueeze(-1)
-
+            X = torch.cat((constant, X), dim=1)
         dim = X.size(1)
-        I = torch.eye(dim, dtype=X.dtype, device=X.device)
-        self.beta = torch.inverse(X.t().matmul(X) + self.alpha * I).matmul(X.t()).matmul(y)
+
+        # optimize Lasso with coordinate descent algorithm
+
+        self.beta = torch.ones((dim, 1), dtype=X.dtype, device=X.device)
+
+        for i in range(1, self.max_iter + 1):
+
+            for j in range(dim):
+                y_pred = X.matmul(self.beta).squeeze(-1)
+                rho = (X[:, j] * (y - y_pred + self.beta[j, 0] * X[:, j])).sum().item()
+                if self.fit_intercept and j == 0:
+                    self.beta[j] = rho
+                else:
+                    self.beta[j] = float(rho < -self.alpha) * (rho + self.alpha) + float(rho > self.alpha) * (rho - self.alpha)
 
         beta = self.beta.unsqueeze(-1).tolist()
         if self.fit_intercept:
-            self.coef_ = beta[0:-1]
-            self.intercept_ = beta[-1]
+            self.coef_ = beta[1:]
+            self.intercept_ = beta[0]
         else:
             self.coef_ = beta
             self.intercept_ = 0.0
@@ -55,7 +67,7 @@ class Lasso(object):
 
         if self.fit_intercept:
             constant = torch.ones((num, 1), dtype=X.dtype, device=X.device)
-            X = torch.cat((X, constant), dim=1)
+            X = torch.cat((constant, X), dim=1)
 
         y = X.matmul(self.beta).unsqueeze(-1)
         return y
