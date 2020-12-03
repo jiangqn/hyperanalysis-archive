@@ -1,9 +1,10 @@
 import torch
+import math
 
-class LinearRegression(object):
+class Lasso(object):
 
     def __init__(self, alpha: float = 1.0, fit_intercept: bool = True, max_iter: int = 1000) -> None:
-        super(LinearRegression, self).__init__()
+        super(Lasso, self).__init__()
         assert alpha >= 0
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -35,13 +36,19 @@ class LinearRegression(object):
 
         # optimize Lasso with coordinate descent algorithm
 
-        self.beta = torch.ones((dim, 1), dtype=X.dtype, device=X.device)
+        self.beta = torch.randn((dim, 1), dtype=X.dtype, device=X.device)
 
         for i in range(1, self.max_iter + 1):
 
             for j in range(dim):
                 y_pred = X.matmul(self.beta).squeeze(-1)
-                rho = (X[:, j] * (y - y_pred + self.beta[j, 0] * X[:, j])).sum().item()
+                rho = (X[:, j] * (y - y_pred + self.beta[j, 0] * X[:, j])).mean().item()
+
+                if math.isnan(rho):
+                    raise ValueError("rho is nan")
+                else:
+                    print(i, j, rho)
+
                 if self.fit_intercept and j == 0:
                     self.beta[j] = rho
                 else:

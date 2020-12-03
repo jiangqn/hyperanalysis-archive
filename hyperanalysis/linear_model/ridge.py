@@ -35,7 +35,7 @@ class Ridge(object):
         I = torch.eye(dim, dtype=X.dtype, device=X.device)
         self.beta = torch.inverse(X.t().matmul(X) + self.alpha * I).matmul(X.t()).matmul(y)
 
-        beta = self.beta.unsqueeze(-1).tolist()
+        beta = self.beta.squeeze(-1).tolist()
         if self.fit_intercept:
             self.coef_ = beta[1:]
             self.intercept_ = beta[0]
