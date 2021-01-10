@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: hyperanalysis
+Version: 0.1
+Summary: A GPU-accelerated data analysis toolkit based on PyTorch.
+Home-page: https://github.com/jiangqn/hyperanalysis
+Author: jiangqn
+Author-email: jiangqn.nju@gmail.com
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
