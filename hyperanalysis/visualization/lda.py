@@ -44,7 +44,8 @@ def linear_discriminant_analysis(X: torch.Tensor, y: torch.Tensor) -> torch.Tens
 
     X = X - X.mean(dim=0, keepdim=True)
 
-    T = torch.randn(dim, dim, dtype=X.dtype, device=X.device)
+    # T = torch.randn(dim, dim, dtype=X.dtype, device=X.device)
+    T = torch.eye(dim, dtype=X.dtype, device=X.device)
     T[:, 0] = U[:, 0]
     T, _ = torch.qr(T)
     T[:, 0] = U[:, 0]
