@@ -1,4 +1,5 @@
 import torch
+from hyperanalysis.utils import linalg
 
 def linear_regression_analysis(X: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
 
@@ -22,31 +23,10 @@ def linear_regression_analysis(X: torch.Tensor, y: torch.Tensor) -> torch.Tensor
     U = torch.inverse(X.t().matmul(X)).matmul(X.t()).matmul(Y)
 
     X = X[:, 0:-1]
-    U = U[0:-1, :]
-    U = U / U.norm(dim=0, keepdim=True)
-
-    # T = torch.randn(dim, dim, dtype=X.dtype, device=X.device)
-    T = torch.eye(dim, dtype=X.dtype, device=X.device)
-    T[:, 0] = U[:, 0]
-    T, _ = torch.qr(T)
-    T[:, 0] = U[:, 0]
-
-    tX = X.matmul(T)
-    tX = tX[:, 1:]
-    cov = tX.t().matmul(tX)
-
-    eigenvalues, eigenvectors = torch.eig(cov, eigenvectors=True)
-    eigenvalues = eigenvalues[:, 0]
-    _, index = eigenvalues.max(dim=0)
-    eigenvector = eigenvectors[index]
-
-    zero = torch.zeros(1, dtype=X.dtype, device=X.device)
-    v = torch.cat([zero, eigenvector], dim=0)
-    V = v.unsqueeze(-1)
-    V = T.matmul(V)
-    V = V / V.norm(dim=0, keepdim=True)
-
-    P = torch.cat([U, V], dim=-1)
-    Z = X.matmul(P)
+    u = U[0:-1, 0]
+    u = u / u.norm()
+    v = linalg.constrained_max_variance(X, u)
+    W = torch.stack([u, v], dim=1)
+    Z = X.matmul(W)
 
     return Z

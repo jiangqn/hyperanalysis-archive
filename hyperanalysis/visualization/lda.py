@@ -1,6 +1,17 @@
 import torch
 # from hyperanalysis.utils.linalg import postive_definite_matrix_power, cov
 from hyperanalysis.utils import linalg
+import math
+
+def scaled_covariance(X: torch.Tensor) -> torch.Tensor:
+    """
+    :param X: torch.FloatTensor (num, dim)
+    :return C: torch.FloatTensor (dim, dim)
+    """
+    X_mean = X.mean(dim=0, keepdim=True)
+    X = X - X_mean
+    C = X.t().matmul(X)
+    return C
 
 def linear_discriminant_analysis(X: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
 
@@ -17,92 +28,58 @@ def linear_discriminant_analysis(X: torch.Tensor, y: torch.Tensor) -> torch.Tens
     dtype = X.dtype
     device = X.device
 
+    X = X - X.mean(dim=0, keepdim=True)
+
     num, dim = X.size()
     K = y.max().item() + 1
 
-    mean = torch.zeros(K, dim, dtype=dtype, device=device)
-    covariance = torch.zeros(K, dim, dim, dtype=dtype, device=device)
-    count = torch.zeros(K, dtype=dtype, device=device)
-    XC = []
-
-    Sw = torch.zeros(dim, dim, dtype=X.dtype, device=X.device)
+    St = scaled_covariance(X)
+    Sw = torch.zeros(dim, dim, dtype=dtype, device=device)
 
     for k in range(K):
 
         index = torch.arange(num, device=X.device)
         mask = (y == k)
-        nk = mask.sum().item()
-        count[k] = nk
+        # nk = mask.sum().item()
         index = index.masked_select(mask)
-        sX = X.index_select(dim=0, index=index)
-        mean[k] = sX.mean(dim=0, keepdim=False)
-        covariance[k] = linalg.cov(sX)
-        XC.append(sX - mean[k].unsqueeze(0))
+        Xk = X.index_select(dim=0, index=index)
+        Sw = Sw + scaled_covariance(Xk)
 
-    prior = count / num
-    xbar = mean.matmul(prior)
+    Sb = St - Sw
 
-    XC = torch.cat(XC, dim=0)
-    std = XC.mean(dim=0)
-    factor = 1.0 / (num - K)
-    X = torch.sqrt(factor) * (XC / std)
-    U, s, Vt = torch.svd(X)
-
-        # m[k] = mk[0]
-        # Sw += sX.t().matmul(sX) / nk - mk.t().matmul(mk)
-
-    # squared_m_norm = (m * m).sum(dim=0, keepdim=True)
-    # Sb = squared_m_norm + squared_m_norm.t() - 2 * m.t().matmul(m)
-    # Sb = Sb - Sb.min()
-    #
-    # pSw = postive_definite_matrix_power(Sw, -1/2)
-    # S = pSw.matmul(Sb).matmul(pSw)
-    # # S = torch.inverse(Sw).matmul(Sb)
-    # eigenvalues, eigenvectors = torch.eig(S, eigenvectors=True)
-    # eigenvalues = eigenvalues[:, 0]
-    #
-    # print(eigenvalues)
+    Sb = Sb / num
+    Sw = Sw / num
 
     if K == 2:
 
-        _, index = eigenvalues.max(dim=0)
-        eigenvector = eigenvectors[index]
+        pSw = linalg.postive_definite_matrix_power(Sw, -0.5)
+        pSb = linalg.postive_definite_matrix_power(Sb, 0.5)
 
-        U = eigenvector.unsqueeze(-1)
-        U = U / U.norm(dim=0, keepdim=True)
-        zu = X.matmul(U)
+        B = pSb.matmul(pSw)
+        _, s, V = torch.svd(B)
 
-        T = torch.eye(dim, dtype=X.dtype, device=X.device)
-        T[:, 0] = U[:, 0]
-        T, _ = torch.qr(T)
-        T[:, 0] = U[:, 0]
+        sorted_indices = s.argsort(dim=0, descending=True)
+        p = V[:, sorted_indices[0]]
+        u = pSw.matmul(p)
+        u = u / u.norm()
+        v = linalg.constrained_max_variance(X, u)
 
-        tX = X.matmul(T)
-        tX = tX[:, 1:]
-        cov = tX.t().matmul(tX)
-
-        eigenvalues, eigenvectors = torch.eig(cov, eigenvectors=True)
-        eigenvalues = eigenvalues[:, 0]
-        # _, index = eigenvalues.max(dim=0)
-        eigenvector = eigenvectors[0]
-
-        zero = torch.zeros(1, dtype=X.dtype, device=X.device)
-        v = torch.cat([zero, eigenvector], dim=0)
-        V = v.unsqueeze(-1)
-        V = T.matmul(V)
-        V = V / V.norm(dim=0, keepdim=True)
-        zv = X.matmul(V)
-
-        Z = torch.cat([zu, zv], dim=-1)
+        W = torch.stack([u, v], dim=1)
+        Z = X.matmul(W)
 
     else: # K > 2
 
-        # sorted_indices = eigenvalues.argsort(dim=0, descending=True)
+        pSw = linalg.postive_definite_matrix_power(Sw, -0.5)
+        pSb = linalg.postive_definite_matrix_power(Sb, 0.5)
 
-        # P = eigenvectors[:, sorted_indices[0, 2]]
-        #
-        P = eigenvectors[:, [0, 2]]
-        P = P / P.norm(dim=0, keepdim=True)
-        Z = X.matmul(P)
+        B = pSb.matmul(pSw)
+        _, s, V = torch.svd(B)
+
+        sorted_indices = s.argsort(dim=0, descending=True)
+        P = V[:, sorted_indices[0:2]]
+        W = pSw.matmul(P)
+        W = W / W.norm(dim=0, keepdim=True)
+
+        Z = X.matmul(W)
 
     return Z

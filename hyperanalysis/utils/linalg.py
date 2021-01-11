@@ -49,3 +49,39 @@ def postive_definite_matrix_power(X: torch.FloatTensor, power=1) -> torch.FloatT
     check_matrix_symmetric(X)
     U, S, V = torch.svd(X)
     return U.matmul(torch.diag(torch.pow(S, power))).matmul(V.t())
+
+def constrained_max_variance(X: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
+    """
+    :param X: torch.FloatTensor (num, dim)
+    :param u: torch.FloatTensor (dim,)
+    :return v: torch.FloatTensor (dim,)
+    """
+
+    assert len(X.size()) == 2
+    assert len(u.size()) == 1
+    assert X.size(1) == u.size(0)
+
+    X = X - X.mean(dim=0, keepdim=True)
+    u = u / u.norm()
+    num, dim = X.size()
+
+    T = torch.eye(dim, dtype=X.dtype, device=X.device)
+    T[:, 0] = u
+    Q, _ = torch.qr(T)
+    Q[:, 0] = u
+
+    qX = X.matmul(Q)
+    qX = qX[:, 1:]
+    cov = qX.t().matmul(qX)
+
+    eigenvalues, eigenvectors = torch.eig(cov, eigenvectors=True)
+    eigenvalues = eigenvalues[:, 0]
+    _, index = eigenvalues.max(dim=0)
+    eigenvector = eigenvectors[index]
+
+    zero = torch.zeros(1, dtype=X.dtype, device=X.device)
+    v = torch.cat([zero, eigenvector], dim=0)
+    v = Q.matmul(v)
+    v = v / v.norm()
+
+    return v
