@@ -1,7 +1,5 @@
 import torch
-# from hyperanalysis.utils.linalg import postive_definite_matrix_power, cov
 from hyperanalysis.utils import linalg
-import math
 
 def scaled_covariance(X: torch.Tensor) -> torch.Tensor:
     """
