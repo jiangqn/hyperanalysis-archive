@@ -12,7 +12,7 @@ def scaled_covariance(X: torch.Tensor) -> torch.Tensor:
     C = X.t().matmul(X)
     return C
 
-class LinearDiscriminantAnalysis(nn.Module):
+class LinearDiscriminantAnalysis(object):
 
     def __init__(self, n_components: int = None) -> None:
         super(LinearDiscriminantAnalysis, self).__init__()
