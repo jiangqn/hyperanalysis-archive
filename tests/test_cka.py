@@ -2,7 +2,7 @@ import sys
 sys.path.append("..")
 import torch
 import numpy as np
-from hyperanalysis.representation_similarity.cka import CKA
+from hyperanalysis.similarity.cka import CKA
 import hyperanalysis.utils.functional as F
 import os
 

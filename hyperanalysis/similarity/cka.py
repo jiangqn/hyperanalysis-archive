@@ -1,5 +1,5 @@
 import torch
-from hyperanalysis.kernel.kernel import get_kernel
+from hyperanalysis.utils.kernel import get_kernel
 
 class CKA(object):
 

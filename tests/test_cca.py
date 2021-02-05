@@ -2,7 +2,7 @@ import sys
 sys.path.append("..")
 import torch
 import numpy as np
-from hyperanalysis.cross_decomposition.cca import CCA
+from hyperanalysis.decomposition.cca import CCA
 from sklearn.cross_decomposition.cca_ import CCA as sCCA
 from scipy.stats import pearsonr
 

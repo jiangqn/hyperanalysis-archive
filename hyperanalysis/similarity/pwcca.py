@@ -1,6 +1,6 @@
 import torch
 from hyperanalysis.decomposition.truncated_svd import TruncatedSVD
-from hyperanalysis.cross_decomposition.cca import CCA
+from hyperanalysis.decomposition.cca import CCA
 
 class PWCCA(object):
 

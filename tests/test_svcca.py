@@ -2,7 +2,7 @@ import sys
 sys.path.append("..")
 import torch
 import numpy as np
-from hyperanalysis.representation_similarity.svcca import SVCCA
+from hyperanalysis.similarity.svcca import SVCCA
 import hyperanalysis.utils.functional as F
 
 path = "../embedding.npy"

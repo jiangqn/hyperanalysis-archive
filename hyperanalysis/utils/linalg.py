@@ -57,6 +57,8 @@ def constrained_max_variance(X: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
     :return v: torch.FloatTensor (dim,)
     """
 
+    X, u = X.clone(), u.clone()
+
     assert len(X.size()) == 2
     assert len(u.size()) == 1
     assert X.size(1) == u.size(0)
@@ -85,3 +87,57 @@ def constrained_max_variance(X: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
     v = v / v.norm()
 
     return v
+
+def constrained_max_correlation(X: torch.Tensor, y: torch.Tensor, u: torch.Tensor) -> torch.Tensor:
+    """
+    :param X: torch.FloatTensor (num, dim)
+    :param y: torch.FloatTensor (num,)
+    :param u: torch.FloatTensor (dim,)
+    :return v: torch.FloatTensor (dim,)
+    """
+
+    X, y, u = X.clone(), y.clone(), u.clone()
+
+    assert len(X.size()) == 2
+    assert len(u.size()) == 1
+    assert X.size(1) == u.size(0)
+
+    X = X - X.mean(dim=0, keepdim=True)
+    u = u / u.norm()
+    num, dim = X.size()
+
+    T = torch.eye(dim, dtype=X.dtype, device=X.device)
+    T[:, 0] = u
+    Q, _ = torch.qr(T)
+    Q[:, 0] = u
+
+    qX = X.matmul(Q)
+    qX[:, 0] = torch.ones(num, dtype=X.dtype, device=X.device)
+
+    v = torch.inverse(qX.t().matmul(qX)).matmul(qX.t()).matmul(y)
+    v[0] = 0
+    v = Q.matmul(v)
+    v = v / v.norm()
+
+    return v
+
+def multiple_correlation(X: torch.Tensor, y: torch.Tensor) -> float:
+    """
+    :param X: torch.FloatTensor (num, dim)
+    :param y: torch.FloatTensor (num,)
+    """
+    assert len(X.size()) == 2
+    assert len(y.size()) == 1
+    assert X.size(0) == y.size(0)
+    num = X.size(0)
+    ones = torch.ones(size=(num, 1), dtype=X.dtype, device=X.device)
+    X = torch.cat((X, ones), dim=1)
+    Y = y.unsqueeze(-1)
+    W = torch.inverse(X.t().matmul(X)).matmul(X.t()).matmul(Y)  # torch.FloatTensor (dim + 1, 1)
+    print(W)
+    Z = X.matmul(W)
+    z = Z.squeeze(-1)
+    y = y - y.mean()
+    z = z - z.mean()
+    correlation = y.dot(z) / (torch.norm(y) * torch.norm(z))
+    return correlation.item()

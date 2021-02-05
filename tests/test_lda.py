@@ -1,5 +1,5 @@
 import torch
-from hyperanalysis.discriminant_analysis.lda import LinearDiscriminantAnalysis
+from hyperanalysis.decomposition.lda import LinearDiscriminantAnalysis
 import matplotlib.pyplot as plt
 from sklearn import datasets
 
