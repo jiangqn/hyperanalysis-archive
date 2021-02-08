@@ -50,6 +50,7 @@ class Cluster(object):
         """
         self._validate_inputs(X)
         self._fit(X)
+        self._is_trained = True
         return self._predict(X)
 
     def fit_transform(self, X: torch.Tensor) -> torch.Tensor:
@@ -58,6 +59,7 @@ class Cluster(object):
         """
         self._validate_inputs(X)
         self._fit(X)
+        self._is_trained = True
         return self._transform(X)
 
     def _fit(self, X: torch.Tensor) -> torch.Tensor:
@@ -80,4 +82,4 @@ class Cluster(object):
 
     def _validate_inputs(self, X: torch.Tensor) -> None:
         assert isinstance(X, torch.Tensor), "The type of input X is wrong."
-        assert X.size() == 2, "This size of input X is wrong."
+        assert len(X.size()) == 2, "This size of input X is wrong."
