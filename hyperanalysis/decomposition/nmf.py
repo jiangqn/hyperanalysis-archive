@@ -2,18 +2,18 @@ import torch
 from torch import nn
 from torch import optim
 from typing import Tuple
+from hyperanalysis.decomposition.base import UnsupervisedDecomposition
 from hyperanalysis.utils.set_seed import set_seed
 
-class NMF(object):
+class NMF(UnsupervisedDecomposition):
 
     """
     non-negative matrix factorization
     """
 
-    def __init__(self, n_components: int = None, init: str = "random", solver: str = "mu",
+    def __init__(self, n_components: int = 2, init: str = "random", solver: str = "mu",
                  tol: float = 1e-6, max_iter: int = 1000, eps: float = 1e-6, verbose: int = 0, random_state: int = 0) -> None:
-        super(NMF, self).__init__()
-        self.n_components = n_components
+        super(NMF, self).__init__(n_components)
         self.init = init
         self.solver = solver
         self.tol = tol
@@ -21,13 +21,6 @@ class NMF(object):
         self.eps = eps
         self.verbose = verbose
         set_seed(random_state)
-
-    def fit(self, X: torch.FloatTensor) -> None:
-        self._fit(X)
-
-    def fit_transform(self, X: torch.FloatTensor) -> torch.FloatTensor:
-        self._fit(X)
-        return self.W
 
     def factorize(self, X: torch.FloatTensor) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
         self._fit(X)
@@ -38,9 +31,6 @@ class NMF(object):
         assert self.init in ["random"]
         assert len(X.size()) == 2
         assert (X < 0).long().sum().item() == 0, "There are negative elements in matrix X."
-
-        if self.n_components == None:
-            self.n_components = min(X.size(0), X.size(1))
 
         scale = torch.sqrt(X.mean() / self.n_components).item()
 

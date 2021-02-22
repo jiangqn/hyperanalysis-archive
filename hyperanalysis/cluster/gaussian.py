@@ -1,5 +1,5 @@
 import torch
-from hyperanalysis.utils.linalg import cov, postive_definite_matrix_power
+from hyperanalysis.linalg import cov, postive_definite_matrix_power
 
 class Gaussian(object):
 

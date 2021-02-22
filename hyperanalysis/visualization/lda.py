@@ -1,5 +1,6 @@
 import torch
-from hyperanalysis.utils import linalg
+from hyperanalysis import linalg
+
 
 def scaled_covariance(X: torch.Tensor) -> torch.Tensor:
     """

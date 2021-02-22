@@ -7,19 +7,14 @@ class Decomposition(object):
     The base class of dimension reduction models.
     """
 
-    def __init__(self, n_components: int, decomposition_type: str) -> None:
+    def __init__(self, n_components: int) -> None:
         super(Decomposition, self).__init__()
         self._n_components = n_components
-        self._decomposition_type = decomposition_type
         self._is_trained = False
 
     @property
     def n_components(self) -> int:
         return self._n_components
-
-    @property
-    def decomposition_type(self) -> str:
-        return self._decomposition_type
 
     @property
     def is_trained(self) -> bool:
@@ -41,7 +36,7 @@ class UnsupervisedDecomposition(Decomposition):
     """
 
     def __init__(self, n_components: int) -> None:
-        super(UnsupervisedDecomposition, self).__init__(n_components, "unsupervised")
+        super(UnsupervisedDecomposition, self).__init__(n_components)
 
     def fit(self, X: torch.Tensor) -> None:
         self._validate_inputs(X)
@@ -88,7 +83,7 @@ class SupervisedDecomposition(Decomposition):
     """
 
     def __init__(self, n_components: int) -> None:
-        super(SupervisedDecomposition, self).__init__(n_components, "supervised")
+        super(SupervisedDecomposition, self).__init__(n_components)
 
     def fit(self, X: torch.Tensor, y: torch.Tensor) -> None:
         self._validate_inputs(X, y)
@@ -129,6 +124,7 @@ class SupervisedDecomposition(Decomposition):
         if y is not None:
             assert isinstance(y, torch.Tensor), "The type of input y is wrong."
             assert len(y.size()) == 1, "This size of input y is wrong."
+            assert X.size(0) == y.size(0), "The num of X is not equal to y."
 
 class CrossDecomposition(Decomposition):
 
@@ -137,7 +133,7 @@ class CrossDecomposition(Decomposition):
     """
 
     def __init__(self, n_components: int) -> None:
-        super(CrossDecomposition, self).__init__(n_components, "cross")
+        super(CrossDecomposition, self).__init__(n_components)
 
     def fit(self, X: torch.Tensor, Y: torch.Tensor) -> None:
         self._validate_inputs(X, Y)
@@ -180,3 +176,4 @@ class CrossDecomposition(Decomposition):
         assert len(X.size()) == 2, "This size of input X is wrong."
         assert isinstance(Y, torch.Tensor), "The type of input Y is wrong."
         assert len(Y.size()) == 2, "This size of input Y is wrong."
+        assert X.size(0) == Y.size(0), "The num of X is not equal to Y."

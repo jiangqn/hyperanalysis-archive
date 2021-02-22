@@ -1,22 +1,13 @@
 import torch
+from hyperanalysis.decomposition.base import UnsupervisedDecomposition
 
-class MDS(object):
+class MDS(UnsupervisedDecomposition):
 
-    def __init__(self, n_components=None) -> None:
-        super(MDS, self).__init__()
-        self.n_components = n_components
+    def __init__(self, n_components: int = 2) -> None:
+        super(MDS, self).__init__(n_components)
 
-    def fit(self, X: torch.FloatTensor) -> None:
+    def _fit(self, X: torch.Tensor) -> None:
         pass
 
-    def fit_transform(self, X: torch.FloatTensor) -> torch.FloatTensor:
-        pass
-
-    def transform(self, X: torch.FloatTensor) -> torch.FloatTensor:
-        pass
-
-    def _fit(self, X: torch.FloatTensor) -> None:
-        pass
-
-    def _transform(self, X: torch.FloatTensor) -> torch.FloatTensor:
+    def _transform(self, X: torch.Tensor) -> torch.Tensor:
         pass

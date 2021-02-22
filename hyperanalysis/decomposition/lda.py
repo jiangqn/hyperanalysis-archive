@@ -1,6 +1,6 @@
 import torch
-from torch import nn
-from hyperanalysis.utils import linalg
+from hyperanalysis import linalg
+from hyperanalysis.decomposition.base import SupervisedDecomposition
 
 def scaled_covariance(X: torch.Tensor) -> torch.Tensor:
     """
@@ -12,35 +12,18 @@ def scaled_covariance(X: torch.Tensor) -> torch.Tensor:
     C = X.t().matmul(X)
     return C
 
-class LinearDiscriminantAnalysis(object):
+class LinearDiscriminantAnalysis(SupervisedDecomposition):
 
-    def __init__(self, n_components: int = None) -> None:
-        super(LinearDiscriminantAnalysis, self).__init__()
-        self.n_components = n_components
+    def __init__(self, n_components: int = 1) -> None:
+        super(LinearDiscriminantAnalysis, self).__init__(n_components)
 
-    def fit(self, X: torch.FloatTensor, y: torch.LongTensor) -> None:
-        self._fit(X, y)
-
-    def transform(self, X: torch.FloatTensor) -> torch.FloatTensor:
-        return self._transform(X)
-
-    def fit_transform(self, X: torch.FloatTensor, y: torch.LongTensor) -> torch.FloatTensor:
-        self._fit(X, y)
-        return self._transform(X)
-
-    def _fit(self, X: torch.FloatTensor, y: torch.LongTensor) -> None:
-
-        X, y = X.clone(), y.clone()
-
-        assert len(X.size()) == 2
-        assert len(y.size()) == 1
-        assert X.size(0) == y.size(0)
+    def _fit(self, X: torch.Tensor, y: torch.LongTensor) -> None:
 
         dtype = X.dtype
         device = X.device
 
-        self.mean_ = X.mean(dim=0, keepdim=True)
-        X -= self.mean_
+        self._mean = X.mean(dim=0, keepdim=True)
+        X = X - self._mean
 
         num, dim = X.size()
         K = y.max().item() + 1
@@ -70,14 +53,20 @@ class LinearDiscriminantAnalysis(object):
 
         sorted_indices = s.argsort(dim=0, descending=True)
         P = V[:, sorted_indices[0:self.n_components]]
-        W = pSw.matmul(P)
-        W = W / W.norm(dim=0, keepdim=True)
+        weight = pSw.matmul(P)
+        weight = weight / weight.norm(dim=0, keepdim=True)
 
-        self.W_ = W
+        self._weight = weight
 
     def _transform(self, X: torch.FloatTensor) -> torch.FloatTensor:
+        return (X - self._mean).matmul(self._weight)
 
-        assert hasattr(self, "mean_")
-        assert hasattr(self, "W_")
+    @property
+    def mean(self) -> torch.Tensor:
+        assert self.is_trained
+        return self._mean
 
-        return (X - self.mean_).matmul(self.W_)
+    @property
+    def weight(self) -> torch.Tensor:
+        assert self.is_trained
+        return self._weight

@@ -1,5 +1,5 @@
 import torch
-from hyperanalysis.utils.linalg import squared_euclidean_distance
+from hyperanalysis.linalg import squared_euclidean_distance
 
 class Kernel(object):
 

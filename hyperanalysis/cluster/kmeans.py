@@ -1,7 +1,7 @@
 import torch
 import random
 from hyperanalysis.utils.set_seed import set_seed
-from hyperanalysis.utils.linalg import squared_euclidean_distance
+from hyperanalysis.linalg import squared_euclidean_distance
 
 class KMeans(object):
 

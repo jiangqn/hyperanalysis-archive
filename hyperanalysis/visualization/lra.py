@@ -1,5 +1,6 @@
 import torch
-from hyperanalysis.utils import linalg
+from hyperanalysis import linalg
+
 
 def linear_regression_analysis(X: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
 
