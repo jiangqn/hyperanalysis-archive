@@ -65,3 +65,5 @@ def get_kernel(kernel: str = "linear", sigma: float = None, degree: int = 2, coe
         _kernel = RBFKernel(sigma=sigma)
 
     return _kernel
+
+linear_kernel = LinearKernel()
