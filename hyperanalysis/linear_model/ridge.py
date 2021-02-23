@@ -1,61 +1,46 @@
 import torch
+from hyperanalysis.linear_model.base import LinearRegressor
 
-class Ridge(object):
+class Ridge(LinearRegressor):
 
-    def __init__(self, alpha: float = 1.0, fit_intercept: bool = True) -> None:
+    def __init__(self, fit_bias: bool = True, l2_reg: float = 0.001) -> None:
         super(Ridge, self).__init__()
-        self.alpha = alpha
-        self.fit_intercept = fit_intercept
+        assert l2_reg > 0, "l2_reg must be large than 0 in ridge regression."
+        self.fit_bias = fit_bias
+        self.l2_reg = l2_reg
 
-    def fit(self, X: torch.FloatTensor, y: torch.FloatTensor) -> None:
-        self._fit(X, y)
+    def _fit(self, X: torch.Tensor, y: torch.Tensor) -> None:
 
-    def predict(self, X: torch.FloatTensor) -> torch.FloatTensor:
-        return self._predict(X)
+        num, dim = X.size()
 
-    def fit_predict(self, X: torch.FloatTensor, y: torch.FloatTensor) -> torch.FloatTensor:
-        self._fit(X, y)
-        return self._predict(X)
-
-    def _fit(self, X: torch.FloatTensor, y: torch.FloatTensor) -> None:
-
-        X, y = X.clone(), y.clone()
-
-        assert len(X.size()) == 2
-        assert len(y.size()) == 1
-        assert X.size(0) == y.size(0)
-        num = X.size(0)
-
-        if self.fit_intercept:
+        if self.fit_bias:
             constant = torch.ones((num, 1), dtype=X.dtype, device=X.device)
             X = torch.cat((constant, X), dim=1)
-        y = y.unsqueeze(-1)
+        Y = y.unsqueeze(-1)
 
         dim = X.size(1)
         I = torch.eye(dim, dtype=X.dtype, device=X.device)
-        self.beta = torch.inverse(X.t().matmul(X) + self.alpha * I).matmul(X.t()).matmul(y)
+        W = torch.inverse(X.t().matmul(X) + self.l2_reg * I).matmul(X.t()).matmul(Y).unsqueeze(-1)
 
-        beta = self.beta.squeeze(-1).tolist()
-        if self.fit_intercept:
-            self.coef_ = beta[1:]
-            self.intercept_ = beta[0]
+        if self.fit_bias:
+            self._weight = W[1:]
+            self._bias = W[0]
         else:
-            self.coef_ = beta
-            self.intercept_ = 0.0
+            self._weight = W
 
-    def _predict(self, X: torch.FloatTensor) -> torch.FloatTensor:
-
-        assert hasattr(self, "coef_")
-        assert hasattr(self, "intercept_")
-
-        X = X.clone()
-
-        assert len(X.size()) == 2
-        num = X.size(0)
-
-        if self.fit_intercept:
-            constant = torch.ones((num, 1), dtype=X.dtype, device=X.device)
-            X = torch.cat((constant, X), dim=1)
-
-        y = X.matmul(self.beta).squeeze(-1)
+    def _predict(self, X: torch.Tensor) -> torch.Tensor:
+        y = X.matmul(self._weight)
+        if self.fit_bias:
+            y = y + self._bias
         return y
+
+    @property
+    def weight(self) -> torch.Tensor:
+        assert self.is_trained
+        return self._weight
+
+    @property
+    def bias(self) -> torch.Tensor:
+        assert self.is_trained
+        assert self.fit_bias
+        return self._bias

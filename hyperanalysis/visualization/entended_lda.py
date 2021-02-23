@@ -1,84 +1,88 @@
 import torch
 from hyperanalysis import linalg
+from hyperanalysis.visualization.base import SupervisedVisualization
 
+class ExtendedLDA(SupervisedVisualization):
 
-def scaled_covariance(X: torch.Tensor) -> torch.Tensor:
-    """
-    :param X: torch.FloatTensor (num, dim)
-    :return C: torch.FloatTensor (dim, dim)
-    """
-    X_mean = X.mean(dim=0, keepdim=True)
-    X = X - X_mean
-    C = X.t().matmul(X)
-    return C
+    def __init__(self) -> None:
+        super(ExtendedLDA, self).__init__()
 
-def linear_discriminant_analysis(X: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def _fit(self, X: torch.Tensor, y: torch.Tensor) -> None:
+        """
+        :param X: FloatTensor (num, dim)
+        :param y: LongTensor (num,)
+        """
 
-    """
-    :param X: torch.FloatTensor (num, dim)
-    :param y: torch.LongTensor (num,)
-    :return Z: torch.FloatTensor (num, 2)
-    """
+        dtype = X.dtype
+        device = X.device
 
-    assert len(X.size()) == 2
-    assert len(y.size()) == 1
-    assert X.size(0) == y.size(0)
+        self._mean = X.mean(dim=0, keepdim=True)
 
-    dtype = X.dtype
-    device = X.device
+        X = X - self._mean
 
-    X = X - X.mean(dim=0, keepdim=True)
+        num, dim = X.size()
+        K = y.max().item() + 1
 
-    num, dim = X.size()
-    K = y.max().item() + 1
+        St = linalg.unnormal_cov(X)
+        Sw = torch.zeros(dim, dim, dtype=dtype, device=device)
 
-    St = scaled_covariance(X)
-    Sw = torch.zeros(dim, dim, dtype=dtype, device=device)
+        for k in range(K):
+            index = torch.arange(num, device=X.device)
+            mask = (y == k)
+            # nk = mask.sum().item()
+            index = index.masked_select(mask)
+            Xk = X.index_select(dim=0, index=index)
+            Sw = Sw + linalg.unnormal_cov(Xk)
 
-    for k in range(K):
+        Sb = St - Sw
 
-        index = torch.arange(num, device=X.device)
-        mask = (y == k)
-        # nk = mask.sum().item()
-        index = index.masked_select(mask)
-        Xk = X.index_select(dim=0, index=index)
-        Sw = Sw + scaled_covariance(Xk)
+        Sb = Sb / num
+        Sw = Sw / num
 
-    Sb = St - Sw
+        if K == 2:
 
-    Sb = Sb / num
-    Sw = Sw / num
+            pSw = linalg.postive_definite_matrix_power(Sw, -0.5)
+            pSb = linalg.postive_definite_matrix_power(Sb, 0.5)
 
-    if K == 2:
+            B = pSb.matmul(pSw)
+            _, s, V = torch.svd(B)
 
-        pSw = linalg.postive_definite_matrix_power(Sw, -0.5)
-        pSb = linalg.postive_definite_matrix_power(Sb, 0.5)
+            sorted_indices = s.argsort(dim=0, descending=True)
+            p = V[:, sorted_indices[0]]
+            u = pSw.matmul(p)
+            u = u / u.norm()
+            v = linalg.constrained_max_variance(X, u)
 
-        B = pSb.matmul(pSw)
-        _, s, V = torch.svd(B)
+            W = torch.stack([u, v], dim=1)
+            self._weight = W
 
-        sorted_indices = s.argsort(dim=0, descending=True)
-        p = V[:, sorted_indices[0]]
-        u = pSw.matmul(p)
-        u = u / u.norm()
-        v = linalg.constrained_max_variance(X, u)
+        else:  # K > 2
 
-        W = torch.stack([u, v], dim=1)
-        Z = X.matmul(W)
+            pSw = linalg.postive_definite_matrix_power(Sw, -0.5)
+            pSb = linalg.postive_definite_matrix_power(Sb, 0.5)
 
-    else: # K > 2
+            B = pSb.matmul(pSw)
+            _, s, V = torch.svd(B)
 
-        pSw = linalg.postive_definite_matrix_power(Sw, -0.5)
-        pSb = linalg.postive_definite_matrix_power(Sb, 0.5)
+            sorted_indices = s.argsort(dim=0, descending=True)
+            P = V[:, sorted_indices[0:2]]
+            W = pSw.matmul(P)
+            self._weight = W / W.norm(dim=0, keepdim=True)
 
-        B = pSb.matmul(pSw)
-        _, s, V = torch.svd(B)
+    def _transform(self, X: torch.Tensor) -> torch.Tensor:
+        """
+        :param X: FloatTensor (num, dim)
+        :param y: LongTensor (num,)
+        :return : FloatTensor (num, 2)
+        """
+        return (X - self._mean).matmul(self._weight)
 
-        sorted_indices = s.argsort(dim=0, descending=True)
-        P = V[:, sorted_indices[0:2]]
-        W = pSw.matmul(P)
-        W = W / W.norm(dim=0, keepdim=True)
+    @property
+    def mean(self) -> torch.Tensor:
+        assert self.is_trained
+        return self._mean
 
-        Z = X.matmul(W)
-
-    return Z
+    @property
+    def weight(self) -> torch.Tensor:
+        assert self.is_trained
+        return self._weight
